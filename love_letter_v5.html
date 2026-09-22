@@ -1,0 +1,630 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Для тебя ❤️</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+:root {
+  --env-w: 380px;
+  --env-h: 260px;
+  --letter-w: 360px;
+  --egg-size: 52px;
+  --egg-font: 60%;
+  --text-size: 18px;
+  --title-size: 28px;
+  --sign-size: 20px;
+  --star-count: 80;
+  --heart-count: 20;
+}
+
+@media (max-width: 600px) {
+  :root {
+    --env-w: 290px;
+    --env-h: 200px;
+    --letter-w: 275px;
+    --egg-size: 44px;
+    --egg-font: 55%;
+    --text-size: 16px;
+    --title-size: 23px;
+    --sign-size: 18px;
+    --star-count: 40;
+    --heart-count: 12;
+  }
+}
+
+body {
+  background: linear-gradient(135deg, #0d0221 0%, #1a0a2e 40%, #2d1b3d 100%);
+  overflow-x: hidden;
+  font-family: Georgia, 'Times New Roman', serif;
+  color: #fff;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+/* Звёзды */
+.starfield { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
+.star { position: absolute; background: #fff; border-radius: 50%; animation: twinkle ease-in-out infinite; }
+@keyframes twinkle { 0%, 100% { opacity: 0.2; } 50% { opacity: 1; } }
+
+/* Летящие сердечки */
+.hearts-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; overflow: hidden; }
+.heart-bg {
+  position: absolute;
+  bottom: -30px;
+  font-size: 20px;
+  animation: floatUp linear infinite;
+  opacity: 0;
+}
+@keyframes floatUp {
+  0% { bottom: -30px; opacity: 0; }
+  10% { opacity: 0.7; }
+  90% { opacity: 0.5; }
+  100% { bottom: 110%; opacity: 0; }
+}
+
+/* Сцена */
+.scene { position: relative; z-index: 10; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; width: 100%; padding: 20px; }
+
+.hint {
+  color: rgba(255,255,255,0.6);
+  font-size: 15px;
+  margin-top: 20px;
+  animation: pulse 2s ease-in-out infinite;
+  text-align: center;
+}
+@keyframes pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 0.9; } }
+
+/* Конверт */
+.envelope-wrapper {
+  position: relative;
+  width: var(--env-w);
+  height: var(--env-h);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.envelope-back {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: linear-gradient(135deg, #8b1a3a, #5c0a24);
+  border-radius: 8px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5), inset 0 0 20px rgba(0,0,0,0.3);
+}
+
+.envelope-body {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: linear-gradient(135deg, #a02040, #6b1030);
+  clip-path: polygon(0 50%, 50% 100%, 100% 50%, 100% 0, 0 0);
+  box-shadow: inset 0 0 20px rgba(0,0,0,0.2);
+}
+
+.envelope-flap {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 55%;
+  background: linear-gradient(135deg, #b02848, #7a1535);
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+  transform-origin: top;
+  transition: transform 0.7s ease-in-out, z-index 0s 0.35s;
+  z-index: 5;
+  box-shadow: inset 0 0 15px rgba(0,0,0,0.2);
+}
+
+.envelope-flap.open {
+  transform: rotateX(180deg);
+  z-index: 1;
+  transition: transform 0.7s ease-in-out, z-index 0s 0.35s;
+}
+
+.envelope-seal {
+  position: absolute;
+  top: 38%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 56px; height: 56px;
+  background: radial-gradient(circle, #d4af37, #b8902a);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 28px;
+  z-index: 6;
+  transition: opacity 0.3s, transform 0.3s;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+}
+
+.envelope-seal.hidden { opacity: 0; transform: translate(-50%, -50%) scale(0); }
+
+/* Письмо */
+.letter-container {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%) scale(0.8);
+  width: var(--letter-w);
+  max-height: 70vh;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 3;
+  transition: opacity 0.5s, transform 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.letter-container.show {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+  pointer-events: auto;
+  z-index: 20;
+}
+
+.letter {
+  background: linear-gradient(135deg, #fff9f0, #fff5e6);
+  border-radius: 12px;
+  padding: 30px 28px;
+  box-shadow: 0 15px 40px rgba(0,0,0,0.4);
+  color: #3a2020;
+  text-align: center;
+}
+
+.letter h1 {
+  font-size: var(--title-size);
+  color: #8b1a3a;
+  margin-bottom: 18px;
+  font-style: italic;
+}
+
+.letter p {
+  font-size: var(--text-size);
+  line-height: 1.8;
+  margin-bottom: 14px;
+  color: #4a2525;
+}
+
+.letter .sign {
+  font-size: var(--sign-size);
+  color: #8b1a3a;
+  margin-top: 20px;
+  font-style: italic;
+}
+
+/* Фейерверк сердечек */
+.burst-heart {
+  position: fixed;
+  font-size: 20px;
+  pointer-events: none;
+  z-index: 15;
+}
+
+/* Пасхалки */
+.egg {
+  position: fixed;
+  width: var(--egg-size);
+  height: var(--egg-size);
+  border-radius: 50%;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.06);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(var(--egg-size) * var(--egg-font));
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 1s, transform 0.3s, background 0.3s, border-color 0.3s;
+  z-index: 50;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.egg.visible { opacity: 0.25; }
+.egg:hover { opacity: 1; transform: scale(1.4); background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); }
+
+.egg-counter {
+  position: fixed;
+  top: 15px; right: 15px;
+  color: rgba(255,255,255,0.5);
+  font-size: 14px;
+  z-index: 50;
+  opacity: 0;
+  transition: opacity 0.5s;
+}
+.egg-counter.show { opacity: 1; }
+
+/* Модальные окна */
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.75);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  padding: 20px;
+}
+
+.modal-overlay.active { display: flex; }
+
+.modal {
+  background: linear-gradient(135deg, #fff9f0, #fff5e6);
+  border-radius: 16px;
+  padding: 32px 28px;
+  max-width: 420px;
+  width: 100%;
+  max-height: 80vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  text-align: center;
+  color: #3a2020;
+  position: relative;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  animation: modalIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes modalIn { from { transform: scale(0.7); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+.modal h2 { font-size: 24px; color: #8b1a3a; margin-bottom: 14px; }
+.modal p { font-size: 17px; line-height: 1.7; margin-bottom: 12px; color: #4a2525; }
+.modal img { max-width: 100%; border-radius: 12px; margin: 14px 0; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+.modal .photo-placeholder {
+  background: linear-gradient(135deg, #f0e0e0, #e8d0d0);
+  border-radius: 12px;
+  padding: 40px 20px;
+  margin: 14px 0;
+  color: #8b1a3a;
+  font-style: italic;
+  font-size: 15px;
+}
+
+.modal-close {
+  position: absolute;
+  top: 12px; right: 14px;
+  width: 34px; height: 34px;
+  background: rgba(139,26,58,0.1);
+  border-radius: 50%;
+  border: none;
+  font-size: 20px;
+  color: #8b1a3a;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+.modal-close:hover { background: rgba(139,26,58,0.2); }
+
+/* Финальный сюрприз */
+.final-overlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.85);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 300;
+  padding: 20px;
+}
+
+.final-overlay.active { display: flex; }
+
+.final-modal {
+  background: linear-gradient(135deg, #fff9f0, #ffe8d6);
+  border-radius: 20px;
+  padding: 40px 30px;
+  max-width: 450px;
+  width: 100%;
+  max-height: 85vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  text-align: center;
+  color: #3a2020;
+  position: relative;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+  animation: modalIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.final-modal h2 { font-size: 30px; color: #8b1a3a; margin-bottom: 16px; }
+.final-modal p { font-size: 18px; line-height: 1.8; margin-bottom: 14px; color: #4a2525; }
+</style>
+</head>
+<body>
+
+<div class="starfield" id="starfield"></div>
+<div class="hearts-bg" id="heartsBg"></div>
+
+<div class="scene">
+  <div class="envelope-wrapper" id="envelope">
+    <div class="envelope-back"></div>
+    <div class="letter-container" id="letterContainer">
+      <div class="letter">
+        <h1>Моей любимой</h1>
+        <p>Каждое утро я просыпаюсь с мыслью о тебе. Ты — первое, что приходит мне на ум, и последняя мысль перед сном. Твой смех — моя любимая мелодия, которую я готов слушать снова и снова.</p>
+        <p>Ты делаешь меня лучше, просто будучи рядом. Рядом с тобой я чувствую себя так, будто могу всё. Твои глаза — это целая вселенная, в которой я хочу жить вечно.</p>
+        <p>Я люблю в тебе всё: как ты злишься по пустякам, как смеёшься до слёз, как засыпаешь у меня на плече. Каждую родинку, каждый вздох, каждое прикосновение.</p>
+        <p>Ты — мой дом. Моя безопасность. Моя радость. Моя самая большая любовь.</p>
+        <p class="sign">Навсегда твой ❤️</p>
+      </div>
+    </div>
+    <div class="envelope-body"></div>
+    <div class="envelope-flap" id="flap"></div>
+    <div class="envelope-seal" id="seal">❤️</div>
+  </div>
+  <div class="hint" id="hint">Нажми на конверт, чтобы открыть ❤️</div>
+</div>
+
+<div class="egg-counter" id="eggCounter">Найдено секретов: 0 / 5</div>
+
+<!-- Пасхалки -->
+<div class="egg" id="egg0" style="top: 8%; left: 5%;">🌙</div>
+<div class="egg" id="egg1" style="top: 12%; right: 6%;">⭐</div>
+<div class="egg" id="egg2" style="bottom: 10%; left: 6%;">🦋</div>
+<div class="egg" id="egg3" style="bottom: 8%; right: 5%;">🌷</div>
+<div class="egg" id="egg4" style="top: 50%; left: 3%;">🎶</div>
+
+<!-- Модалка для пасхалок -->
+<div class="modal-overlay" id="eggModal">
+  <div class="modal">
+    <button class="modal-close" id="eggModalClose">✕</button>
+    <h2 id="eggModalTitle"></h2>
+    <div id="eggModalImg"></div>
+    <p id="eggModalText"></p>
+  </div>
+</div>
+
+<!-- Финальный сюрприз -->
+<div class="final-overlay" id="finalOverlay">
+  <div class="final-modal">
+    <button class="modal-close" id="finalClose">✕</button>
+    <h2>Ты нашла все секреты! 🎉</h2>
+    <p>Это значит, что ты действительно любопытная и внимательная — а это одна из тех черт, за которые я тебя обожаю.</p>
+    <p>Каждый секрет — это маленькая частичка моей любви к тебе. А вместе они складываются в одну большую историю — нашу с тобой.</p>
+    <p>Спасибо, что ты есть. Спасибо, что выбрала меня. Я люблю тебя больше, чем могу выразить словами — но буду пытаться всегда.</p>
+    <p style="font-size: 22px; color: #8b1a3a; margin-top: 20px;">Моё сердце — твоё. Навсегда. ❤️</p>
+  </div>
+</div>
+
+<script>
+// === Данные пасхалок ===
+// Чтобы добавить фото: вставь ссылку в поле img, например:
+//   img: "https://i.imgur.com/abcd123.jpg"
+// Если img пусто — покажется заглушка "Здесь будет фото"
+
+const eggData = [
+  {
+    emoji: "🌙",
+    title: "Наше небо",
+    text: "Помнишь, как мы смотрели на звёзды? Я тогда понял, что даже самое красивое небо не сравнится с тем, как ты смотришь вверх. Ты моё небо, мои звёзды, моя Луна.",
+    img: "file:///C:/Users/User/Downloads/GW5kr9QcteSHm1iXOstM70nLuoUc_bJw_1Pgtb6o6W3lGk8XbXOF79fDhCPvX3IH53iccsOsz6Rx6fs3BX0EuT_H.jpg"
+  },
+  {
+    emoji: "⭐",
+    title: "Моя звезда",
+    text: "Среди миллиардов людей на этой планете именно ты — моя звезда. Та, на которую я смотрю и знаю: мне повезло больше всех на свете.",
+    img: "file:///C:/Users/User/Downloads/tFY-j-5SjCACnyO1cgVm7lHlGqkOk34_goyN6CJRSij4UlC4IglqOVfeYgRtPDA_fxLYbOji_pr1PVLZ3kTwK7Ft.jpg"
+  },
+  {
+    emoji: "🦋",
+    title: "Эффект бабочки",
+    text: "Однажды я просто улыбнулся тебе — и это изменило всё. Каждое маленькое мгновение с тобой превращается в большую историю нашей любви.",
+    img: "file:///C:/Users/User/Downloads/_cTsM-lCw5YBEtPtwpQPmy8dMa18QB4iUe1e2et6lnbqL47ZhP-VdsrT5qgNsls1IzUJW1U0MnqbjCS0IEdsEs-M.jpg"
+  },
+  {
+    emoji: "🌷",
+    title: "Мой любимый цветок",
+    text: "Ты нежнее любого цветка. Даже весенние тюльпаны не так красивы, как ты утром, когда только проснулась. Ты — мой любимый цветок, который расцветает каждый день.",
+    img: "https://rpc.alice.yandex.ru/gproxy/get_preview_url?FileGuid=859f886a-b66b11f1-8a0d08dd-2fcf2129&UrlPostfix=192x192"
+  },
+  {
+    emoji: "🎶",
+    title: "Наша мелодия",
+    text: "Есть песни, которые напоминают мне о тебе. Но ни одна из них не звучит так, как твоё имя в моём сердце. Ты — моя любимая мелодия.",
+    img: ""
+  }
+];
+
+// === Звёзды ===
+(function() {
+  const sf = document.getElementById('starfield');
+  const count = getComputedStyle(document.documentElement).getPropertyValue('--star-count').trim();
+  for (let i = 0; i < parseInt(count); i++) {
+    const s = document.createElement('div');
+    s.className = 'star';
+    const size = Math.random() * 2 + 1;
+    s.style.cssText = 'width:' + size + 'px;height:' + size + 'px;left:' + Math.random()*100 + '%;top:' + Math.random()*100 + '%;animation-duration:' + (Math.random()*3+2) + 's;animation-delay:' + Math.random()*3 + 's;';
+    sf.appendChild(s);
+  }
+})();
+
+// === Летящие сердечки на фоне ===
+(function() {
+  const hb = document.getElementById('heartsBg');
+  const count = getComputedStyle(document.documentElement).getPropertyValue('--heart-count').trim();
+  const emojis = ['❤️','💕','💖','💗','💘'];
+  for (let i = 0; i < parseInt(count); i++) {
+    const h = document.createElement('div');
+    h.className = 'heart-bg';
+    h.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+    h.style.left = Math.random() * 100 + '%';
+    h.style.animationDuration = (Math.random() * 6 + 5) + 's';
+    h.style.animationDelay = Math.random() * 8 + 's';
+    h.style.fontSize = (Math.random() * 16 + 12) + 'px';
+    hb.appendChild(h);
+  }
+})();
+
+// === Логика конверта ===
+let opened = false;
+
+function openEnvelope() {
+  if (opened) return;
+  opened = true;
+  document.getElementById('flap').classList.add('open');
+  document.getElementById('seal').classList.add('hidden');
+  document.getElementById('hint').style.display = 'none';
+
+  setTimeout(function() {
+    document.getElementById('letterContainer').classList.add('show');
+    burstHearts();
+    showEggs();
+  }, 400);
+}
+
+document.getElementById('envelope').addEventListener('click', function(e) {
+  e.stopPropagation();
+  openEnvelope();
+});
+
+document.getElementById('envelope').addEventListener('touchstart', function(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  openEnvelope();
+});
+
+// === Фейерверк сердечек ===
+function burstHearts() {
+  const env = document.getElementById('envelope');
+  const rect = env.getBoundingClientRect();
+  const cx = rect.left + rect.width / 2;
+  const cy = rect.top + rect.height / 2;
+  const emojis = ['❤️','💕','💖','💗','💘','❤️'];
+  for (let i = 0; i < 25; i++) {
+    const h = document.createElement('div');
+    h.className = 'burst-heart';
+    h.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+    h.style.left = cx + 'px';
+    h.style.top = cy + 'px';
+    h.style.fontSize = (Math.random() * 16 + 14) + 'px';
+    document.body.appendChild(h);
+
+    const angle = (Math.PI * 2 * i) / 25 + (Math.random() - 0.5) * 0.5;
+    const dist = Math.random() * 200 + 100;
+    const dx = Math.cos(angle) * dist;
+    const dy = Math.sin(angle) * dist;
+
+    h.animate([
+      { transform: 'translate(0,0) scale(0)', opacity: 1 },
+      { transform: 'translate(' + dx + 'px,' + dy + 'px) scale(1)', opacity: 1, offset: 0.3 },
+      { transform: 'translate(' + dx*1.3 + 'px,' + dy*1.3 + 'px) scale(0.5)', opacity: 0 }
+    ], { duration: 1500, easing: 'cubic-bezier(0.4, 0, 0.6, 1)' });
+
+    setTimeout(function() { h.remove(); }, 1500);
+  }
+}
+
+// === Пасхалки ===
+let foundEggs = new Set();
+
+function showEggs() {
+  for (let i = 0; i < 5; i++) {
+    (function(idx) {
+      setTimeout(function() {
+        document.getElementById('egg' + idx).classList.add('visible');
+      }, idx * 200);
+    })(i);
+  }
+  document.getElementById('eggCounter').classList.add('show');
+}
+
+function openEgg(idx) {
+  if (foundEggs.has(idx)) return;
+  foundEggs.add(idx);
+  document.getElementById('eggCounter').textContent = 'Найдено секретов: ' + foundEggs.size + ' / 5';
+
+  var data = eggData[idx];
+  document.getElementById('eggModalTitle').textContent = data.title;
+  document.getElementById('eggModalText').textContent = data.text;
+
+  var imgDiv = document.getElementById('eggModalImg');
+  if (data.img) {
+    imgDiv.innerHTML = '<img src="' + data.img + '" alt="Фото">';
+  } else {
+    imgDiv.innerHTML = '<div class="photo-placeholder">Здесь будет фото</div>';
+  }
+
+  document.getElementById('eggModal').classList.add('active');
+
+  if (foundEggs.size === 5) {
+    setTimeout(function() {
+      showFinal();
+    }, 600);
+  }
+}
+
+// Привязка кликов к пасхалкам
+for (var i = 0; i < 5; i++) {
+  (function(idx) {
+    var egg = document.getElementById('egg' + idx);
+    egg.addEventListener('click', function(e) {
+      e.stopPropagation();
+      openEgg(idx);
+    });
+    egg.addEventListener('touchstart', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      openEgg(idx);
+    });
+  })(i);
+}
+
+// Закрытие модалок
+document.getElementById('eggModalClose').addEventListener('click', function(e) {
+  e.stopPropagation();
+  document.getElementById('eggModal').classList.remove('active');
+});
+
+document.getElementById('finalClose').addEventListener('click', function(e) {
+  e.stopPropagation();
+  document.getElementById('finalOverlay').classList.remove('active');
+});
+
+// Финальный сюрприз
+function showFinal() {
+  document.getElementById('eggModal').classList.remove('active');
+  setTimeout(function() {
+    document.getElementById('finalOverlay').classList.add('active');
+    finalFireworks();
+  }, 300);
+}
+
+function finalFireworks() {
+  var emojis = ['❤️','💕','💖','💗','💘','🌹','✨','💝'];
+  for (var burst = 0; burst < 4; burst++) {
+    (function(b) {
+      setTimeout(function() {
+        var cx = Math.random() * window.innerWidth;
+        var cy = Math.random() * window.innerHeight * 0.7 + 50;
+        for (var i = 0; i < 20; i++) {
+          var h = document.createElement('div');
+          h.className = 'burst-heart';
+          h.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+          h.style.left = cx + 'px';
+          h.style.top = cy + 'px';
+          h.style.fontSize = (Math.random() * 18 + 12) + 'px';
+          document.body.appendChild(h);
+
+          var angle = (Math.PI * 2 * i) / 20;
+          var dist = Math.random() * 150 + 80;
+          var dx = Math.cos(angle) * dist;
+          var dy = Math.sin(angle) * dist;
+
+          h.animate([
+            { transform: 'translate(0,0) scale(0)', opacity: 1 },
+            { transform: 'translate(' + dx + 'px,' + dy + 'px) scale(1)', opacity: 1, offset: 0.4 },
+            { transform: 'translate(' + dx*1.4 + 'px,' + dy*1.4 + 'px) scale(0.3)', opacity: 0 }
+          ], { duration: 1800, easing: 'cubic-bezier(0.4, 0, 0.6, 1)' });
+
+          setTimeout(function() { h.remove(); }, 1800);
+        }
+      }, b * 400);
+    })(burst);
+  }
+}
+</script>
+</body>
+</html>
